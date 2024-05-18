@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking Search Result</title>
+    <style>
+        .logo {
+            width: 10vw;
+            height: 13vh;
+            position: relative;
+            right: 2vw;
+            top: 5vh;
+        }
+        .search {
+            border: 0.1vw solid lightgray;
+            border-radius: 10vw;
+            width: 30vw;
+            height: 5vh;
+            box-shadow: 0 0.6944vw 1.3889vw rgba(0,0,0,0.10), 0 0.4167vw 0.4167vw rgba(0,0,0,0.10);
+            font-size: 1.2vw;
+            padding-left: 1vw;
+        }
+        .btnSr {
+            border-radius: 10vw;
+            border: none;
+            background-color: gray;
+            color: white;
+            width: 5vw;
+            height: 5.6vh;
+            box-shadow: 0 0.6944vw 1.3889vw rgba(0,0,0,0.10), 0 0.4167vw 0.4167vw rgba(0,0,0,0.10);
+            margin-left: 1vw;
+            font-size: 0.8vw;
+        }
+        .btnSr:active {
+            transform: scale(0.9, 0.9);
+        }
+        .info{
+            font-size: 0.8vw;
+            color: rgb(182, 182, 182);
+            position: relative;
+            left: 33vw;
+        }
+    </style>
+</head>
+<body>
+<center>
+    <form action="/parkingsearch" method="get">
+        <a href="/parkingInfo"><img src="./logo.jpg" class="logo"></a>
+        <input type="text" class="search" value="" id="keyword" name="keyword" th:value="${keyword}">
+        <button type="submit" class="btnSr">검색</button>
+    </form>
+    <br><br>
+    <span class="info">*주차장 상세정보를 보려면 이름클릭</span>
+    <table style="border: 0.1vw lightgray solid; text-align: center; width: 80vw; font-size: 1.1vw">
+        <thead>
+        <tr>
+            <th style="width: 15vw; text-indent: 5vw">주차장 이름</th>
+            <th style="width: 20vw;">주소</th>
+            <th style="width: 5vw;">총 주차면</th>
+            <th style="width: 9vw;">주차 가능 공간</th>
+            <th style="width: 13vw;">실시간 업데이트 시간</th>
+            <th style="width: 5vw;">유료</th>
+        </tr>
+        </thead>
+        <tbody style="font-size: 1.0vw">
+        <tr style="height: 5vh;" th:each="parkingInfo : ${parkingInfoList}" th:if="${parkingInfo.CAPACITY != null and parkingInfo.CAPACITY != 1}">
+            <td style="border-top:0.1vw lightgray solid; cursor: pointer; text-align: right;"
+                th:text="${parkingInfo.PARKING_NAME}"
+                th:data-parking-name="${parkingInfo.PARKING_NAME}"
+                th:data-address="${parkingInfo.ADDR}"
+                th:data-capacity="${parkingInfo.CAPACITY}"
+                th:data-lat="${parkingInfo.LAT}"
+                th:data-lng="${parkingInfo.LNG}"
+                th:data-update-time="${parkingInfo.CUR_PARKING_TIME}"
+                th:data-pay="${parkingInfo.PAY_YN}"
+                th:data-wdBegin="${parkingInfo.WEEKDAY_BEGIN_TIME}"
+                th:data-wdEnd="${parkingInfo.WEEKDAY_END_TIME}"
+                th:data-weBegin="${parkingInfo.WEEKEND_BEGIN_TIME}"
+                th:data-weEnd="${parkingInfo.WEEKEND_END_TIME}"
+                th:data-rates="${parkingInfo.RATES}"
+                th:data-timeRate="${parkingInfo.TIME_RATE}"
+                th:data-addRates="${parkingInfo.ADD_RATES}"
+                th:data-addTimeRate="${parkingInfo.ADD_TIME_RATE}"
+                th:data-dayMax="${parkingInfo.DAY_MAXIMUM}"
+                th:data-curPark="${parkingInfo.CUR_PARKING}"
+                onclick="showDetail(this)">
+                이레타운 B동
+            </td>
+            <td style="border-top: 0.1vw lightgray solid; text-align: left; padding-left: 7.5vw;" th:text="${parkingInfo.ADDR}">천안시 동남구 문암로 41-1</td>
+            <td style="border-top: 0.1vw lightgray solid;" th:text="${parkingInfo.CAPACITY}">3000</td>
+            <td style="width: 5vw; border-top: 0.1vw lightgray solid;">
+                <span th:if="${(parkingInfo.CAPACITY - parkingInfo.CUR_PARKING) <= 0}" style="color: red;">주차불가</span>
+                <span th:if="${(parkingInfo.CAPACITY - parkingInfo.CUR_PARKING) > 0}" th:text="${parkingInfo.CAPACITY - parkingInfo.CUR_PARKING}" style="color: blue"></span>
+            </td>
+            <td style="border-top: 0.1vw lightgray solid;" th:text="${parkingInfo.CUR_PARKING_TIME}">2024-05-16 03:11:26</td>
+            <td style="border-top: 0.1vw lightgray solid;" th:text="${parkingInfo.PAY_YN}">유료</td>
+
+        </tr>
+        </tbody>
+    </table>
+</center>
+<script>
+    function showDetail(element) {
+        var parkingName = element.getAttribute("data-parking-name");
+        var address = element.getAttribute("data-address");
+        var capacity = parseInt(element.getAttribute("data-capacity"));
+        var lat = parseFloat(element.getAttribute("data-lat"));
+        var lng = parseFloat(element.getAttribute("data-lng"));
+        var updateTime = element.getAttribute("data-update-time");
+        var curPark = parseInt(element.getAttribute("data-curPark"));
+        var wdBegin = element.getAttribute("data-wdBegin");
+        var wdEnd = element.getAttribute("data-wdEnd");
+        var weBegin = element.getAttribute("data-weBegin");
+        var weEnd = element.getAttribute("data-weEnd");
+        var rates = parseInt(element.getAttribute("data-rates"));
+        var timeRate = parseInt(element.getAttribute("data-timeRate"));
+        var addRates = parseInt(element.getAttribute("data-addRates"));
+        var addTimeRate = parseInt(element.getAttribute("data-addTimeRate"));
+        var dayMax = parseInt(element.getAttribute("data-dayMax"));
+
+        var parkingArea = capacity - curPark;
+
+
+        var screenWidth = screen.width;
+        var screenHeight = screen.height;
+        var detailWindow = window.open("", "Parking Detail", `width=${screenWidth},height=${screenHeight}`);
+        var htmlContent = `
+        <html>
+            <head>
+                <title>${parkingName} - 주차장 상세 정보</title>
+                <script type="text/javascript">
+                    // Load Kakao Map script
+                    (function() {
+                        var script = document.createElement('script');
+                        script.async = true;
+                        script.src = '//dapi.kakao.com/v2/maps/sdk.js?appkey=3a54f93232184b8c18746a796251b9f9&libraries=services';
+                        script.onload = function() {
+                                    setTimeout(function() {
+                                        var mapContainer = document.getElementById('map');
+                                        var mapOption = {
+                                            center: new kakao.maps.LatLng(${lat}, ${lng}),
+                                            level: 3
+                                        };
+
+                                        var map = new kakao.maps.Map(mapContainer, mapOption);
+
+                                        var markerPosition = new kakao.maps.LatLng(${lat}, ${lng});
+                                        var marker = new kakao.maps.Marker({
+                                            position: markerPosition
+                                        });
+                                        marker.setMap(map);
+
+                                        var infowindow = new kakao.maps.InfoWindow({
+                                            content: '<div style="padding:0.34vw;">${parkingName}</div>'
+                                        });
+                                        infowindow.open(map, marker);
+                                    }, 100);
+                        };
+                        document.head.appendChild(script);
+                    })();
+                <\/script>`+`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 2vw;
+      height: 50vh;
+    }
+    .left, .right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 1vw;
+      height: 35vh;
+      width: 40vw;
+    }
+    .btnClose{
+      margin-top: 13vh;
+      font-size: 1vw;
+      color: white;
+      width: 7vw;
+      height: 4.5vh;
+      background-color: cornflowerblue;
+      border: none;
+      border-radius: 5vw;
+      box-shadow: 0 0.6944vw 1.3889vw rgba(0,0,0,0.10), 0 0.4167vw 0.4167vw rgba(0,0,0,0.10);
+      transition: color 0.5s ease;
+    }
+    .btnClose:hover{
+      color: black;
+    }
+    .btnClose:active{
+      transform: scale(1.1,1.1);
+    }
+  </style>
+</head>
+<body>
+  <center>
+    <div id="map" style="width: 60vw; height: 45vh; border: 0.1vw solid black;"></div>
+    <div class="container">
+      <div class="left" style="width: 50vw; height: 45vh; border-right: 0.1vh solid lightgray;">
+        <h2 style="font-size: 2.5vw;">${parkingName}</h2>
+        <span style="font-size: 1vw;"><span style="font-size: 1.5vw;">⚲</span> ${address}</span><br>
+        <hr style="border-top: 0.05vw solid lightgray; width: 40vw;">
+        <div style="display: flex; justify-content: center; position: relative; right: 12vw;">
+        <span style="font-size: 1vw;"><span style="font-size: 1.3vw;">✱ </span>운영 시간</span>
+        <ul style="list-style: none; font-size: 0.9vw; color: gray;">
+          <li>월 ${wdBegin} ~ ${wdEnd}</li>
+          <li>화 ${wdBegin} ~ ${wdEnd}</li>
+          <li>수 ${wdBegin} ~ ${wdEnd}</li>
+          <li>목 ${wdBegin} ~ ${wdEnd}</li>
+          <li>금 ${wdBegin} ~ ${wdEnd}</li>
+          <li>토 ${weBegin} ~ ${weEnd}</li>
+          <li>일 ${weBegin} ~ ${weEnd}</li>
+        </ul>
+        </div>
+        <div style="display: flex; justify-content: center; position: relative; left: 12vw; bottom: 19.5vh;">
+        <span style="font-size: 1vw;"><span style="font-size: 1.3vw;">💰 </span>금액</span>
+        <ul style="list-style: none; font-size: 0.9vw; color: gray;">
+          <li>기본 ${timeRate}분 ${rates}원</li>
+          <li>추가 ${addTimeRate}분 ${addRates}원</li>
+          <li>일 최대 ${dayMax}원</li>
+        </ul>
+        </div>
+      </div>
+      <div class="right" style="padding-top: 1vw;">
+        <div style="padding-top: 1vw;">
+          <span style="font-size: 2vw; font-weight: bold; margin-right: 19vw;">실시간 정보</span><br>
+          <span style="font-size: 1vw; color: gray; margin-right: 13vw;">업데이트 시간: ${updateTime}</span><br><br>
+          <table>
+            <tr>
+              <td style="padding: 1vw; font-size: 1.2vw;">총 주자구획 수</td>
+              <td style="padding: 1vw; font-size: 1.2vw;">주차된 차량</td>
+              <td style="padding: 1vw; font-size: 1.2vw;">남은 주차 공간</td>
+            </tr>
+            <tr>
+              <td style="text-align: center;"><span style="font-size: 1.3vw; color: black;">${capacity}</span></td>
+              <td style="text-align: center;"><span style="font-size: 1.3vw; color: red;">${curPark}</span></span></td>
+              <td style="text-align: center;"><span style="font-size: 1.3vw; color: blue;">${parkingArea}</span></span></td>
+            </tr>
+          </table>
+
+          <button class="btnClose" onClick="window.close()">창 닫기</button>
+        </div>
+      </div>
+    </div>
+  </center>
+</body>
+</html>
+`;
+        detailWindow.document.write(htmlContent);
+    }
+</script>
+</body>
+</html>
